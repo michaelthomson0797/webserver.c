@@ -13,7 +13,7 @@ steps:
       platforms: linux/amd64
       dry_run: true
       repo: *repo
-      tags: latest
+      auto_tag: true
     when:
       event: pull_request
 
@@ -24,7 +24,7 @@ steps:
       platforms: linux/amd64
       repo: *repo
       registry: gitea.michaelthomson.dev
-      tags: latest
+      auto_tag: true
       username: ${CI_REPO_OWNER}
       password:
         from_secret: pa_token
