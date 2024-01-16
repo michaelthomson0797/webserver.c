@@ -16,7 +16,6 @@ steps:
       tags: latest
     when:
       event: pull_request
-      path: *file
 
   publish:
     image: woodpeckerci/plugin-docker-buildx
@@ -31,4 +30,3 @@ steps:
         from_secret: pa_token
     when:
       event: push
-      path: *file
