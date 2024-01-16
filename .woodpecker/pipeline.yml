@@ -10,7 +10,7 @@ steps:
     image: woodpeckerci/plugin-docker-buildx
     settings:
       dockerfile: *file
-      platforms: linux/arm/v7,linux/arm64/v8,linux/amd64,linux/ppc64le
+      platforms: linux/amd64
       dry_run: true
       repo: *repo
       tags: latest
@@ -23,7 +23,7 @@ steps:
     secrets: [pa_token]
     settings:
       dockerfile: *file
-      platforms: linux/arm/v7,linux/arm64/v8,linux/amd64,linux/ppc64le
+      platforms: linux/amd64
       repo: *repo
       registry: gitea.michaelthomson.dev
       tags: latest
