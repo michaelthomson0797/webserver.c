@@ -20,7 +20,6 @@ steps:
 
   publish:
     image: woodpeckerci/plugin-docker-buildx
-    secrets: [pa_token]
     settings:
       dockerfile: *file
       platforms: linux/amd64
@@ -28,7 +27,8 @@ steps:
       registry: gitea.michaelthomson.dev
       tags: latest
       username: ${CI_REPO_OWNER}
-      password: ${PA_TOKEN}
+      password:
+        from_secret: pa_token
     when:
       event: push
       path: *file
