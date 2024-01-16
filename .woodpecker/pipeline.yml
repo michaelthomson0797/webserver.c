@@ -1,0 +1,34 @@
+when:
+  branch: main
+
+variables:
+  - &file Dockerfile
+  - &repo gitea.michaelthomson.dev/${CI_REPO_OWNER}/michaelthomson
+
+steps:
+  dryrun:
+    image: woodpeckerci/plugin-docker-buildx
+    settings:
+      dockerfile: *file
+      platforms: linux/arm/v7,linux/arm64/v8,linux/amd64,linux/ppc64le
+      dry_run: true
+      repo: *repo
+      tags: latest
+    when:
+      event: pull_request
+      path: *file
+
+  publish:
+    image: woodpeckerci/plugin-docker-buildx
+    secrets: [pa_token]
+    settings:
+      dockerfile: *file
+      platforms: linux/arm/v7,linux/arm64/v8,linux/amd64,linux/ppc64le
+      repo: *repo
+      registry: gitea.michaelthomson.dev
+      tags: latest
+      username: ${CI_REPO_OWNER}
+      password: ${PA_TOKEN}
+    when:
+      event: push
+      path: *file
