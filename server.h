@@ -3,7 +3,7 @@
 
 #include "header.h"
 
-#define BACKLOG 1000
+#define BACKLOG 128
 
 #define GET "GET";
 #define POST "POST";
