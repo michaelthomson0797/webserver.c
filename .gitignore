@@ -1,36 +1,52 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# Prerequisites
+*.d
 
-# dependencies
-/node_modules
-/.pnp
-.pnp.js
-.yarn/install-state.gz
+# Object files
+*.o
+*.ko
+*.obj
+*.elf
 
-# testing
-/coverage
+# Linker output
+*.ilk
+*.map
+*.exp
 
-# next.js
-/.next/
-/out/
+# Precompiled Headers
+*.gch
+*.pch
 
-# production
-/build
+# Libraries
+*.lib
+*.a
+*.la
+*.lo
 
-# misc
-.DS_Store
-*.pem
+# Shared objects (inc. Windows DLLs)
+*.dll
+*.so
+*.so.*
+*.dylib
 
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+# Executables
+*.exe
+*.out
+*.app
+*.i*86
+*.x86_64
+*.hex
 
-# local env files
-.env*.local
+# Debug files
+*.dSYM/
+*.su
+*.idb
+*.pdb
 
-# vercel
-.vercel
-
-# typescript
-*.tsbuildinfo
-next-env.d.ts
+# Kernel Module Compile Results
+*.mod*
+*.cmd
+.tmp_versions/
+modules.order
+Module.symvers
+Mkfile.old
+dkms.conf
