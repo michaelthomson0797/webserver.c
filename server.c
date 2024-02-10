@@ -90,24 +90,40 @@ static void start(const char *PORT) {
   }
 }
 
-size_t read_file(char *buf, char *filename) {
-  FILE *fptr = fopen(filename, "r");
+char *read_file(char *filename, size_t *file_size) {
+  // read in file
+  FILE *fp = fopen(filename, "r");
+  if (fp == NULL) {
+    fprintf(stderr, "read_file: error opening file: %s\n", filename);
+    return NULL;
+  }
 
   // Calculate the content length
-  fseek(fptr, 0, SEEK_END);
-  size_t body_length = ftell(fptr);
-  rewind(fptr);
+  fseek(fp, 0, SEEK_END);
+  *file_size = ftell(fp);
+  rewind(fp);
 
-  // Read in file
-  if (fread(buf, 1, body_length, fptr) == 0) {
-    fprintf(stderr, "fread: unable to read file contents");
-    exit(1);
+  // allocate memory for file contents
+  char *buffer = malloc(*file_size + 1);
+  if (buffer == NULL) {
+    fprintf(stderr, "read_file: memory allocation failed.\n");
+    fclose(fp);
+    return NULL;
   }
-  buf[body_length] = '\0'; // terminate string
-  
-  fclose(fptr);
-  
-  return body_length;
+
+  // Read the file contents into buffer
+  size_t bytes_read = fread(buffer, 1, *file_size, fp);
+  if (bytes_read != *file_size) {
+    fprintf(stderr, "read_file: error reading file.\n");
+    free(buffer);
+    fclose(fp);
+    return NULL;
+  }
+
+  fclose(fp);
+  buffer[*file_size] = '\0';
+
+  return buffer;
 }
 
 void respond(int *client_fd) {
@@ -127,10 +143,9 @@ void respond(int *client_fd) {
   } else {
     filename = "404.html";
   }
-   
-  // read in file and get length
-  char *body = malloc(MAX_BUFFER_SIZE);
-  size_t body_length = read_file(body, filename);
+
+  size_t body_length;
+  char *body = read_file(filename, &body_length);
 
   // Create the Content-Length header
   struct Header headers[MAX_HEADER_NUM];
@@ -145,8 +160,6 @@ void respond(int *client_fd) {
   // send response string
   char response_string[MAX_BUFFER_SIZE];
   response_to_string(response_string, &response);
-
-  printf("%s", response_string);
 
   if (send(*client_fd, response_string, strlen(response_string), 0) == -1) {
     perror("send content");
@@ -169,13 +182,6 @@ void launch(struct Server *server) {
       perror("accept");
       continue;
     }
-
-    char name[INET6_ADDRSTRLEN];
-    char port[10];
-    getnameinfo((struct sockaddr *)&client_addr, client_addr_len, name,
-                sizeof(name), port, sizeof(port),
-                NI_NUMERICHOST | NI_NUMERICSERV);
-    printf("New connection from: %s:%s\n", name, port);
 
     if (!fork()) {
       close(sockfd);

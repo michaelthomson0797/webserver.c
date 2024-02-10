@@ -5,14 +5,6 @@
 
 #define BACKLOG 128
 
-#define GET "GET";
-#define POST "POST";
-
-struct Route {
-  char *path;
-  char *method;
-};
-
 struct Server {
   const char *PORT;
 };
