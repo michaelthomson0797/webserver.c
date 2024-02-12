@@ -8,9 +8,9 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "header.h"
 #include "request.h"
 #include "response.h"
+#include "route.h"
 #include "server.h"
 
 #define MAX_BUFFER_SIZE 2048
@@ -18,10 +18,30 @@
 
 int sockfd;
 
-struct Server server_constructor(char *PORT) {
+struct Server server_constructor(const char *PORT) {
   struct Server server;
   server.PORT = PORT;
+  server.num_routes = 0;
+  server.routes = NULL;
   return server;
+}
+
+void add_route(struct Server *server, char *method, char *target,
+               Route_Callback route_callback) {
+  struct Route route = route_constructor(target, method, route_callback);
+  server->routes =
+      realloc(server->routes, sizeof(struct Route) * (server->num_routes + 1));
+  server->routes[server->num_routes++] = route;
+}
+
+struct Route *match_route(struct Server *server, char *method, char *target) {
+  for (int i = 0; i < server->num_routes; i++) {
+    if (strcmp(server->routes[i].target, target) == 0 &&
+        strcmp(server->routes[i].method, method) == 0) {
+      return &server->routes[i];
+    }
+  }
+  return NULL;
 }
 
 void sigchld_handler(int s) {
@@ -90,7 +110,7 @@ static void start(const char *PORT) {
   }
 }
 
-char *read_file(char *filename, size_t *file_size) {
+char *read_file(char *filename) {
   // read in file
   FILE *fp = fopen(filename, "r");
   if (fp == NULL) {
@@ -100,11 +120,11 @@ char *read_file(char *filename, size_t *file_size) {
 
   // Calculate the content length
   fseek(fp, 0, SEEK_END);
-  *file_size = ftell(fp);
+  size_t file_size = ftell(fp);
   rewind(fp);
 
   // allocate memory for file contents
-  char *buffer = malloc(*file_size + 1);
+  char *buffer = malloc(file_size + 1);
   if (buffer == NULL) {
     fprintf(stderr, "read_file: memory allocation failed.\n");
     fclose(fp);
@@ -112,8 +132,8 @@ char *read_file(char *filename, size_t *file_size) {
   }
 
   // Read the file contents into buffer
-  size_t bytes_read = fread(buffer, 1, *file_size, fp);
-  if (bytes_read != *file_size) {
+  size_t bytes_read = fread(buffer, 1, file_size, fp);
+  if (bytes_read != file_size) {
     fprintf(stderr, "read_file: error reading file.\n");
     free(buffer);
     fclose(fp);
@@ -121,41 +141,37 @@ char *read_file(char *filename, size_t *file_size) {
   }
 
   fclose(fp);
-  buffer[*file_size] = '\0';
+  buffer[file_size] = '\0';
 
   return buffer;
 }
 
-void respond(int *client_fd) {
-
+void respond(struct Server *server, int *client_fd) {
+  // Recieve request
   char buf[MAX_BUFFER_SIZE];
   recv(*client_fd, buf, MAX_BUFFER_SIZE, 0);
 
+  // Parse request
   struct Request request = request_constructor(buf);
 
-  printf("%s %s %s\n", request.method, request.target, request.version);
+  // Match route and get body content
+  struct Route *matched_route =
+      match_route(server, request.method, request.target);
 
-  char *filename;
-  if (strcmp(request.target, "/") == 0) {
-    filename = "index.html";
-  } else if (strcmp(request.target, "/clicked") == 0) {
-    filename = "clicked.html";
+  struct Response response;
+  if (matched_route == NULL) {
+    response = response_constructor("HTTP/1.1", NOT_FOUND, "Not found");
   } else {
-    filename = "404.html";
+    char *body = matched_route->route_callback(request);
+    response = response_constructor("HTTP/1.1", OK, body);
   }
 
-  size_t body_length;
-  char *body = read_file(filename, &body_length);
+  // calculate content length
+  char body_length[12];
+  snprintf(body_length, sizeof(body_length), "%lu", strlen(response.body));
+  add_header(&response, "Content-Length", body_length);
 
-  // Create the Content-Length header
-  struct Header headers[MAX_HEADER_NUM];
-  char contentLength[MAX_BUFFER_SIZE];
-  snprintf(contentLength, sizeof(contentLength), "%zu", body_length);
-  headers[0] = header_constructor("Content-Length", contentLength);
-
-  // construct response
-  struct Response response =
-      response_constructor("HTTP/1.1", OK, body, 1, headers);
+  printf("%s %s -> %s\n", request.method, request.target, response.status);
 
   // send response string
   char response_string[MAX_BUFFER_SIZE];
@@ -165,8 +181,6 @@ void respond(int *client_fd) {
     perror("send content");
     exit(1);
   }
-
-  free(body);
 }
 
 void launch(struct Server *server) {
@@ -185,7 +199,7 @@ void launch(struct Server *server) {
 
     if (!fork()) {
       close(sockfd);
-      respond(&client_fd);
+      respond(server, &client_fd);
       close(client_fd);
       exit(0);
     }

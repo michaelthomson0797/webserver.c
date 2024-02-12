@@ -1,26 +1,22 @@
-all: server
+# ----- Variables for customization -----
+CC = gcc  # Compiler (you can change to clang if desired)
+CFLAGS = -g3 -Wall -Wextra -fsanitize=address,undefined # Standard flags + debugging & warnings
+LDFLAGS = # Linker flags, if any
 
+# ----- Automatic dependency tracking -----
+SRCS := $(wildcard *.c)           # Find all .c source files
+OBJS := $(SRCS:.c=.o)            # Corresponding object files (.o)
+HDRS := $(SRCS:.c=.h)
+
+# ----- Targets -----
+server: $(OBJS) 
+	$(CC) $(CFLAGS) $(OBJS) -o server $(LDFLAGS)  
+
+# Create object files from source files
+%.o: %.c %.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# Phony target for cleaning 
+.PHONY: clean
 clean:
-	@rm -rf *.o
-	@rm -rf server
-
-server: main.o server.o request.o header.o utils.o response.o
-	gcc -g3 -fsanitize=address,undefined -o server $^
-
-main.o: main.c
-	gcc -g3 -fsanitize=address,undefined -c -o main.o main.c
-
-server.o: server.c server.h
-	gcc -g3 -fsanitize=address,undefined -c -o server.o server.c
-
-request.o: request.c request.h
-	gcc -g3 -fsanitize=address,undefined -c -o request.o request.c
-
-response.o: response.c response.h
-	gcc -g3 -fsanitize=address,undefined -c -o response.o response.c
-
-header.o: header.c header.h
-	gcc -g3 -fsanitize=address,undefined -c -o header.o header.c
-
-utils.o: utils.c utils.h
-	gcc -g3 -fsanitize=address,undefined -c -o utils.o utils.c
+	rm -f $(OBJS) server

@@ -1,7 +1,23 @@
-<div>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>Michael Thomson</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <script src="https://unpkg.com/htmx.org@1.9.10"></script>
-  <!-- have a button POST a click via AJAX -->
-  <button hx-post="/clicked" hx-swap="outerHTML">
-    Click Me
-  </button>
-</div>
+</head>
+
+<body>
+  <h1>Michael Thomson</h1>
+  <p>Welcome to my site! doesn't it have so much content? I know, right?</p>
+  <p>It even has reactivity!</p>
+  <div>
+    <!-- have a button POST a click via AJAX -->
+    <button hx-post="/clicked" hx-swap="outerHTML">
+      Click Me
+    </button>
+  </div>
+</body>
+
+</html>
