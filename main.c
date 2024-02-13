@@ -3,11 +3,11 @@
 #include <stdlib.h>
 
 char *home(struct Request request) {
-  return read_file("index.html");
+  return read_file("public/index.html");
 }
 
 char *clicked(struct Request request) {
-  return read_file("clicked.html");
+  return read_file("public/clicked.html");
 }
 
 int main(void) {

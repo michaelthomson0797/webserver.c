@@ -143,10 +143,7 @@ char *read_file(char *filename) {
   fclose(fp);
   buffer[file_size] = '\0';
 
-  char *value = strdup(buffer);
-  free(buffer);
-
-  return value;
+  return buffer;
 }
 
 void respond(struct Server *server, int *client_fd) {
